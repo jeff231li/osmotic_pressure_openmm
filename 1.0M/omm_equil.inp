@@ -1,0 +1,49 @@
+# Hardware
+Hardware_type      = CUDA                  # Hardware options (CPU, CUDA, OPENCL)
+Hardware_gpu_prec  = mixed                 # Precision (single, mixed, double)
+Hardware_gpu_idx   = 1                     # GPU index
+
+# Input/Output
+structure          = NaCl-1.0M.psf         # PSF file
+coordinates        = NaCl-1.0M.pdb         # PDB file
+output_name        = equilibrate           # Output name
+param_file         = ../common/toppar.txt  # List of topology and parameter files
+
+# Output Options
+reporter           = on                    # State reporter
+nstout             = 5000                  # State reporter frequency
+dcdreporter        = off                   # DCD reporter
+nstdcd             = 5000                  # DCD frequency
+
+# Integration
+time_step          = 2.0                   # time step (fs)
+CutOff             = 12.0                  # Non-bonded cutoff (Ang)
+Switching          = 10.0                  # switching dist (Ang)
+constraint         = HBonds                # Constraint options (see OpenMM doc)
+
+# NVT
+fric_coeff         = 1.0                   # Langevin coeff (ps^-1)
+temperature        = 300.0                 # Temperature (Kelvin)
+
+# NPT
+Pressure_sim       = on                    # Anisotropic Monte Carlo Barostat?
+Pressure_val       = 1.0                   # Pressure (bar)
+Pressure_freq      = 25                    # Frequency of Monte Carlo
+Box_dim_xy         = 48.0                  # Single number means X=Y,
+                                           # Two numbers sets unique X and Y values
+# Minimization
+Min_run            = on
+Min_nstep          = 1000                  # Minimization step
+
+# MD Equilibration
+MD_run             = on                    # Simulation type (MD or Osmotic)
+MD_equil           = 500000                # Equilibration steps
+
+# Flat-bottom Potential
+Pot_wall           = on
+Pot_zmax           = 72.0
+Pot_zmin           = 24.0
+Pot_kz             = 10.0
+Pot_atomsFile      = tagged_atoms.pdb
+Pot_atomsCol       = O
+Pot_atomsColValue  = 1.0
