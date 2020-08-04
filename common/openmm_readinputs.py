@@ -83,7 +83,7 @@ class _OpenMMOSMOConfig(object):
                     inp_param = dummy[0].upper().strip()
                     try:
                         inp_value = dummy[1].strip()
-                    except:
+                    except KeyError:
                         inp_value = None
 
                     if inp_value:

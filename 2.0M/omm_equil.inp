@@ -17,9 +17,10 @@ nstdcd             = 5000                  # DCD frequency
 
 # Integration
 time_step          = 2.0                   # time step (fs)
-CutOff             = 12.0                  # Non-bonded cutoff (Ang)
-Switching          = 10.0                  # switching dist (Ang)
-constraint         = HBonds                # Constraint options (see OpenMM doc)
+nonbondedmethod    = PME                   # Long-range treatment (Ewald, PME or LJPME)
+nonbondedcutoff    = 12.0                  # Non-bonded cutoff (Ang)
+switching          = 10.0                  # switching dist (Ang)
+constraint         = HBonds                # Constraint options (HBonds, AllBonds or HAngles)
 
 # NVT
 fric_coeff         = 1.0                   # Langevin coeff (ps^-1)
@@ -40,10 +41,10 @@ MD_run             = on                    # Simulation type (MD or Osmotic)
 MD_equil           = 500000                # Equilibration steps
 
 # Flat-bottom Potential
-Pot_wall           = on
-Pot_zmax           = 72.0
-Pot_zmin           = 24.0
-Pot_kz             = 10.0
-Pot_atomsFile      = tagged_atoms.pdb
-Pot_atomsCol       = O
-Pot_atomsColValue  = 1.0
+Pot_wall           = on                    # Harmonic wall in the z direction
+Pot_zmax           = 72.0                  # Location of the wall at the top
+Pot_zmin           = 24.0                  # Location of the wall at the bottom
+Pot_kz             = 10.0                  # Spring constant (kcal/mol/Ang^2)
+Pot_atomsFile      = tagged_atoms.pdb      # PDB file with tagged atoms
+Pot_atomsCol       = O                     # PDB Column
+Pot_atomsColValue  = 1.0                   # PDB Column value
