@@ -4,7 +4,7 @@ Hardware_gpu_prec  = mixed                 # Precision (single, mixed, double)
 Hardware_gpu_idx   = 1                     # GPU index
 
 # Input/Output
-structure          = NaCl-5.0M.psf         # PSF file
+topology           = NaCl-5.0M.psf         # PSF file
 coordinates        = NaCl-5.0M.pdb         # PDB file
 output_name        = osmotic               # Output name
 restart_name       = equilibrate           # Restart name

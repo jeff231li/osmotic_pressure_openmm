@@ -4,8 +4,8 @@ Hardware_gpu_prec  = mixed                 # Precision (single, mixed, double)
 Hardware_gpu_idx   = 1                     # GPU index
 
 # Input/Output
-structure          = NaCl-0.5M.psf         # PSF file
-coordinates        = NaCl-0.5M.pdb         # PDB file
+topology           = NaCl-0.5M.psf         # topology file (psf or prmtop)
+coordinates        = NaCl-0.5M.pdb         # coordinates file (pdb or rst7)
 output_name        = equilibrate           # Output name
 param_file         = ../common/toppar.txt  # List of topology and parameter files
 
@@ -17,8 +17,9 @@ nstdcd             = 5000                  # DCD frequency
 
 # Integration
 time_step          = 2.0                   # time step (fs)
-CutOff             = 12.0                  # Non-bonded cutoff (Ang)
-Switching          = 10.0                  # switching dist (Ang)
+nonbondedmethod    = PME                   # Long-range treatment (see OpenMM doc)
+nonbondedcutoff    = 12.0                  # Non-bonded cutoff (Ang)
+switching          = 10.0                  # switching dist (Ang)
 constraint         = HBonds                # Constraint options (see OpenMM doc)
 
 # NVT

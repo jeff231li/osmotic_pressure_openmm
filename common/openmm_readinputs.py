@@ -1,32 +1,33 @@
-from simtk.openmm.app import *
-from simtk.openmm import *
-from simtk.unit import *
-import numpy as np
+import sys
+import simtk.unit as unit
+import simtk.openmm.app as app
 
 
-class _OpenMMOSMOConfig():
+class _OpenMMOSMOConfig(object):
     def __init__(self):
         # Hardware
         self.Hardware_type = 'CUDA'
-        self.Hardware_gpu_prec = 'mixed'
+        self.Hardware_gpu_precision = 'mixed'
         self.Hardware_gpu_idx = '0'
 
         # Input/Output
-        self.structure = None
+        self.topology = None
+        self.topology_type = None
         self.coordinates = None
         self.output_name = None
         self.restart_name = None
         self.param_file = None
-        self.nstout = 500
-        self.nstdcd = 500
-        self.reporter = 'off'
+        self.log_freq = 500
+        self.traj_freq = 500
+        self.state_reporter = 'off'
         self.dcdreporter = 'off'
 
         # MD Integration and CutOff
         self.dt = 2.0
+        self.nonbondedmethod = app.PME
         self.cutoff = 12.0
         self.switch = 10.0
-        self.constraint = HBonds
+        self.constraint = app.HBonds
 
         # NVT
         self.fric_coeff = 1.0
@@ -36,17 +37,17 @@ class _OpenMMOSMOConfig():
         self.npt = 'off'
         self.npt_val = 0.0
         self.npt_freq = 25
-        self.Box_xlen = 0.0
-        self.Box_ylen = 0.0
+        self.box_xlen = 0.0
+        self.box_ylen = 0.0
 
         # Minimization
         self.min_run = 'off'
-        self.min_nstep = 1000
+        self.min_steps = 1000
         self.min_tol = 0.1
 
         # MD Equilibration
-        self.MD_run = 'off'
-        self.MD_equil = 50000
+        self.md_run = 'off'
+        self.md_equil = 50000
 
         # Flat-bottom Potential
         self.POT_wall = 'on'
@@ -72,8 +73,8 @@ class _OpenMMOSMOConfig():
         self.OP_total = (self.OP_equil + self.OP_production) * self.OP_ensembles
         self.OP_nblocks = int(self.OP_production / self.OP_freq)
 
-    def readconfig(self, inputFile):
-        for line in open(inputFile, 'r'):
+    def readconfig(self, inputfile):
+        for line in open(inputfile, 'r'):
             if not line.startswith("#"):
                 if line.find("#") >= 0:
                     line = line.split("#")[0]
@@ -84,20 +85,29 @@ class _OpenMMOSMOConfig():
                         inp_value = dummy[1].strip()
                     except:
                         inp_value = None
+
                     if inp_value:
                         # Hardware
                         if inp_param == 'HARDWARE_TYPE':
                             self.Hardware_type = inp_value
                         if inp_param == 'HARDWARE_GPU_PREC':
-                            self.Hardware_gpu_pre = inp_value
+                            self.Hardware_gpu_precision = inp_value
                         if inp_param == 'HARDWARE_GPU_IDX':
                             self.Hardware_gpu_idx = inp_value
 
                         # Input/Output
-                        if inp_param == 'STRUCTURE':
-                            self.structure = inp_value
+                        if inp_param == 'TOPOLOGY':
+                            self.topology = inp_value
+                            if inp_value.split('.')[-1] is 'psf':
+                                self.topology_type = 'CHARMM'
+                            elif inp_value.split('.')[-1] is 'pmrtop':
+                                self.topology_type = 'AMBER'
+                            else:
+                                raise NotImplementedError
                         if inp_param == 'COORDINATES':
                             self.coordinates = inp_value
+                            if inp_value.split('.')[-1] not in ['pdb', 'rst7']:
+                                raise NotImplementedError
                         if inp_param == 'OUTPUT_NAME':
                             self.output_name = inp_value
                         if inp_param == 'RESTART_NAME':
@@ -105,30 +115,37 @@ class _OpenMMOSMOConfig():
                         if inp_param == 'PARAM_FILE':
                             self.param_file = inp_value
                         if inp_param == 'NSTOUT':
-                            self.nstout = int(inp_value)
+                            self.log_freq = int(inp_value)
                         if inp_param == 'NSTDCD':
-                            self.nstdcd = int(inp_value)
+                            self.traj_freq = int(inp_value)
                         if inp_param == 'REPORTER':
-                            self.reporter = inp_value
+                            self.state_reporter = inp_value
                         if inp_param == 'DCDREPORTER':
                             self.dcdreporter = inp_value
 
                         # MD Integration and CutOff
                         if inp_param == 'TIME_STEP':
                             self.dt = float(inp_value)
-                        if inp_param == 'CUTOFF':
-                            self.cutoff = float(inp_value) * angstrom
+                        if inp_param == 'NONBONDEDMETHOD':
+                            if inp_value is 'PME':
+                                self.nonbondedmethod = app.PME
+                            elif inp_value is 'LJPME':
+                                self.nonbondedmethod = app.LJPME
+                            else:
+                                raise NotImplementedError
+                        if inp_param == 'NONBONDEDCUTOFF':
+                            self.cutoff = float(inp_value) * unit.angstrom
                         if inp_param == 'SWITCHING':
-                            self.switch = float(inp_value) * angstrom
+                            self.switch = float(inp_value) * unit.angstrom
                         if inp_param == 'CONSTRAINT':
                             if inp_value == 'NONE':
                                 self.constraint = None
                             if inp_value == 'HBONDS':
-                                self.constraint = HBonds
+                                self.constraint = app.HBonds
                             if inp_value == 'ALLBONDS':
-                                self.constraint = AllBonds
+                                self.constraint = app.AllBonds
                             if inp_value == 'HANGLES':
-                                self.constraint = HAngles
+                                self.constraint = app.HAngles
 
                         # NVT
                         if inp_param == 'FRIC_COEFF':
@@ -146,25 +163,25 @@ class _OpenMMOSMOConfig():
                         if inp_param == 'BOX_DIM_XY':
                             temporary = dummy[-1].split()
                             if len(temporary) == 1:
-                                self.Box_xlen = float(temporary[0])
-                                self.Box_ylen = float(temporary[0])
+                                self.box_xlen = float(temporary[0])
+                                self.box_ylen = float(temporary[0])
                             elif len(temporary) == 2:
-                                self.Box_xlen = float(temporary[0])
-                                self.Box_ylen = float(temporary[1])
-                            
+                                self.box_xlen = float(temporary[0])
+                                self.box_ylen = float(temporary[1])
+
                         # Minimization
                         if inp_param == 'MIN_RUN':
                             self.min_run = inp_value
                         if inp_param == 'MIN_NSTEPS':
-                            self.min_nstep = int(inp_value)
+                            self.min_steps = int(inp_value)
                         if inp_param == 'MIN_TOL':
                             self.min_tol = float(inp_value)
 
                         # MD Equilibration
                         if inp_param == 'MD_RUN':
-                            self.MD_run = inp_value
+                            self.md_run = inp_value
                         if inp_param == 'MD_EQUIL':
-                            self.MD_equil = int(inp_value)
+                            self.md_equil = int(inp_value)
 
                         # Flat-bottom Potential
                         if inp_param == 'POT_wall':
@@ -204,19 +221,11 @@ class _OpenMMOSMOConfig():
         return self
 
 
-def read_config(configFile):
-    return _OpenMMOSMOConfig().readconfig(configFile)
+def read_config(configfile):
+    return _OpenMMOSMOConfig().readconfig(configfile)
 
 
-def read_psf(filename):
-    return CharmmPsfFile(filename)
-
-
-def read_pdb(filename):
-    return PDBFile(filename)
-
-
-def read_params(filename):
+def _read_charmm_params(filename):
     charmmExt = ['rtf', 'prm', 'str']
     paramFiles = ()
 
@@ -229,28 +238,74 @@ def read_params(filename):
             if ext in charmmExt:
                 paramFiles += (parfile,)
 
-    return CharmmParameterSet(*paramFiles)
+    return app.CharmmParameterSet(*paramFiles)
 
 
-def load_structure(inp):
+def _load_charmm_structure(inp):
     # Load Structure
-    psf = read_psf(inp.structure)
-    pdb = read_pdb(inp.coordinates)
-    params = read_params(inp.param_file)
+    psffile = app.CharmmPsfFile(inp.topology)
+    pdbfile = app.PDBFile(inp.coordinates)
+    params = _read_charmm_params(inp.param_file)
 
-    # Determine z dimensions
-    coords = pdb.positions
-    min_crds = coords[0][2] / nanometer
-    max_crds = coords[0][2] / nanometer
+    # Determine dimensions in z
+    coords = pdbfile.positions
+    min_crds = coords[0][2] / unit.nanometer
+    max_crds = coords[0][2] / unit.nanometer
     for coord in coords:
-        min_crds = min(min_crds, coord[2] / nanometer)
-        max_crds = max(max_crds, coord[2] / nanometer)
-        boxlz = max_crds - min_crds
+        min_crds = min(min_crds, coord[2] / unit.nanometer)
+        max_crds = max(max_crds, coord[2] / unit.nanometer)
+        box_length_z = max_crds - min_crds
 
     # Set PBC box
-    psf.setBox(inp.Box_xlen * angstrom,
-               inp.Box_ylen * angstrom,
-               boxlz*nanometer)
+    psffile.setBox(
+        inp.Box_xlen * unit.angstrom,
+        inp.Box_ylen * unit.angstrom,
+        box_length_z * unit.nanometer,
+    )
 
-    return psf, pdb, params
+    return psffile, pdbfile, params
 
+
+def _load_amber_structure(inp):
+    # Load structure
+    prmtop = app.AmberPrmtopFile(inp.topology)
+    inpcrd = app.AmberInpcrdFile(inp.coordinates)
+
+    return prmtop, inpcrd
+
+
+def create_system(inp):
+    # Load files
+    if inp.topology_type is 'CHARMM':
+        print(f"Loading {inp.topology_type} structures")
+        sys.stdout.flush()
+        topology, coordinates, params = _load_charmm_structure(inp)
+
+        # Create System Object
+        print(f"Creating OpenMM system from {inp.topology_type} files")
+        sys.stdout.flush()
+        system = topology.createSystem(
+            params,
+            nonbondedMethod=inp.nonbondedmethod,
+            nonbondedCutoff=inp.cutoff,
+            switchDistance=inp.switch,
+            constraints=inp.constraint,
+            rigidWater=True
+        )
+
+    elif inp.topology_type is 'AMBER':
+        print(f"Loading {inp.topology_type} structures")
+        sys.stdout.flush()
+        topology, coordinates = _load_amber_structure(inp)
+
+        # Create System Object
+        print(f"Creating OpenMM system from {inp.topology_type} files")
+        sys.stdout.flush()
+        system = topology.createSystem(
+            nonbondedMethod=inp.nonbondedmethod,
+            nonbondedCutoff=inp.cutoff,
+            constraints=inp.constraint,
+            rigidWater=True
+        )
+
+    return system, topology, coordinates

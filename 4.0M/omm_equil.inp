@@ -4,7 +4,7 @@ Hardware_gpu_prec  = mixed                 # Precision (single, mixed, double)
 Hardware_gpu_idx   = 0                     # GPU index
 
 # Input/Output
-structure          = NaCl-4.0M.psf         # PSF file
+topology           = NaCl-4.0M.psf         # PSF file
 coordinates        = NaCl-4.0M.pdb         # PDB file
 output_name        = equilibrate           # Output name
 param_file         = ../common/toppar.txt  # List of topology and parameter files
