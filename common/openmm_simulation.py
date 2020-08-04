@@ -25,10 +25,10 @@ system, topology, coordinates = create_system(inp)
 if inp.POT_wall == 'on':
     print("Flat-bottom wall setup")
     sys.stdout.flush()
-    z_wall = openmm.CustomExternalForce("(kz/2.0)*(max(0, z-zmax)^2 + min(0, z-zmin)^2)")
-    z_wall.addGlobalParameter("kz",   inp.POT_kz * unit.kilocalories_per_mole/unit.angstroms**2)
-    z_wall.addGlobalParameter("zmax", inp.POT_zmax * unit.angstroms)
-    z_wall.addGlobalParameter("zmin", inp.POT_zmin * unit.angstroms)
+    z_wall = openmm.CustomExternalForce("(k_z/2.0)*(max(0, z-z_max)^2 + min(0, z-z_min)^2)")
+    z_wall.addGlobalParameter("k_z",   inp.POT_kz * unit.kilocalories_per_mole/unit.angstroms**2)
+    z_wall.addGlobalParameter("z_max", inp.POT_zmax * unit.angstroms)
+    z_wall.addGlobalParameter("z_min", inp.POT_zmin * unit.angstroms)
     idx = 0
     ion_index = []
     for line in open(inp.POT_atoms):
