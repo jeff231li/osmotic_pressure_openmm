@@ -1,9 +1,9 @@
 # Info
-This repository containns OpenMM simulation scripts that was used to calculate the osmotic pressure of NaCl. The method was developed by Luo and Roux and is described in the article below:
+This repository contains OpenMM scripts to calculate the osmotic pressure of NaCl. The method was developed by Luo and Roux and is described in the article below:
 
 `Luo, Y. & Roux, B. Simulation of Osmotic Pressure in Concentrated Aqueous Salt Solutions. J. Phys. Chem. Lett. 1, 183–189 (2010).`
 
-Basically, once the system is created (i.e. psf and pdb files) we run an initial minimization and equilibration. Then we perform an ensemble of 10-20 simulations to calculate the osmotic pressure.
+Basically, once we have the system (i.e. psf and pdb files) we run an initial minimization and equilibration. Then we perform an ensemble of 10-20 simulations to calculate the osmotic pressure.
 
 For the NaCl system, the bash scripts below controls the flow of the simulation. The simulation part can be parallelized over the different systems (i.e. over concentration).
 ```
