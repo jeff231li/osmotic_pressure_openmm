@@ -102,11 +102,13 @@ class _OpenMMOSMOConfig(object):
                                 self.topology_type = 'CHARMM'
                             elif inp_value.split('.')[-1] is 'pmrtop':
                                 self.topology_type = 'AMBER'
+                            elif inp_value.split('.')[-1] is 'top':
+                                self.topology_type = 'GROMACS'
                             else:
                                 raise NotImplementedError
                         if inp_param == 'COORDINATES':
                             self.coordinates = inp_value
-                            if inp_value.split('.')[-1] not in ['pdb', 'rst7']:
+                            if inp_value.split('.')[-1] not in ['pdb', 'rst7', 'gro']:
                                 raise NotImplementedError
                         if inp_param == 'OUTPUT_NAME':
                             self.output_name = inp_value
@@ -127,7 +129,9 @@ class _OpenMMOSMOConfig(object):
                         if inp_param == 'TIME_STEP':
                             self.dt = float(inp_value)
                         if inp_param == 'NONBONDEDMETHOD':
-                            if inp_value is 'PME':
+                            if inp_value is 'Ewald':
+                                self.nonbondedmethod = app.Ewald
+                            elif inp_value is 'PME':
                                 self.nonbondedmethod = app.PME
                             elif inp_value is 'LJPME':
                                 self.nonbondedmethod = app.LJPME
@@ -274,6 +278,14 @@ def _load_amber_structure(inp):
     return prmtop, inpcrd
 
 
+def _load_gromacs_structure(inp):
+    # Load structure
+    gmxtop = app.GromacsTopFile(inp.topology)
+    gmxgro = app.GromacsGroFile(inp.coordinates)
+
+    return gmxtop, gmxgro
+
+
 def create_system(inp):
     # Load files
     if inp.topology_type is 'CHARMM':
@@ -297,6 +309,21 @@ def create_system(inp):
         print(f"Loading {inp.topology_type} structures")
         sys.stdout.flush()
         topology, coordinates = _load_amber_structure(inp)
+
+        # Create System Object
+        print(f"Creating OpenMM system from {inp.topology_type} files")
+        sys.stdout.flush()
+        system = topology.createSystem(
+            nonbondedMethod=inp.nonbondedmethod,
+            nonbondedCutoff=inp.cutoff,
+            constraints=inp.constraint,
+            rigidWater=True
+        )
+
+    elif inp.topology_type is 'GROMACS':
+        print(f"Loading {inp.topology_type} structures")
+        sys.stdout.flush()
+        topology, coordinates = _load_gromacs_structure(inp)
 
         # Create System Object
         print(f"Creating OpenMM system from {inp.topology_type} files")
