@@ -3,7 +3,7 @@ import simtk.unit as unit
 import simtk.openmm.app as app
 
 
-class _OpenMMOSMOConfig(object):
+class _OpenMMOSMOTICConfig(object):
     def __init__(self):
         # Hardware
         self.Hardware_type = 'CUDA'
@@ -55,6 +55,8 @@ class _OpenMMOSMOConfig(object):
         self.POT_zmin = 0.0
         self.POT_kz = 0.0
         self.POT_atoms = None
+        self.POT_atoms_from = None
+        self.POT_atoms_file = None
         self.POT_colA = 0
         self.POT_colB = 0
         self.POT_tag = 1.0
@@ -196,8 +198,13 @@ class _OpenMMOSMOConfig(object):
                             self.POT_zmin = float(inp_value)
                         if inp_param == 'POT_KZ':
                             self.POT_kz = float(inp_value)
+                        if inp_param == 'POT_ATOMS':
+                            self.POT_atoms = inp_value.split(',')
+                            self.POT_atoms_from = 'name'
                         if inp_param == 'POT_ATOMSFILE':
-                            self.POT_atoms = inp_value
+                            self.POT_atoms_file = inp_value
+                            if self.POT_atoms_from is not None:
+                                self.POT_atoms_from = 'file'
                         if inp_param == 'POT_ATOMSCOL':
                             if inp_value == 'O':
                                 self.POT_colA = 55
@@ -226,7 +233,7 @@ class _OpenMMOSMOConfig(object):
 
 
 def read_config(configfile):
-    return _OpenMMOSMOConfig().readconfig(configfile)
+    return _OpenMMOSMOTICConfig().readconfig(configfile)
 
 
 def _read_charmm_params(filename):

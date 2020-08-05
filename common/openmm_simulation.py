@@ -1,10 +1,11 @@
+import sys
+import time
+import parmed as pmd
+import netCDF4 as netcdf
 import simtk.unit as unit
 import simtk.openmm as openmm
 import simtk.openmm.app as app
 from common.openmm_readinputs import read_config, create_system
-import netCDF4 as netcdf
-import time
-import sys
 
 # User Input
 inp = read_config(sys.argv[1])
@@ -29,16 +30,24 @@ if inp.POT_wall == 'on':
     z_wall.addGlobalParameter("k_z",   inp.POT_kz * unit.kilocalories_per_mole/unit.angstroms**2)
     z_wall.addGlobalParameter("z_max", inp.POT_zmax * unit.angstroms)
     z_wall.addGlobalParameter("z_min", inp.POT_zmin * unit.angstroms)
-    idx = 0
+
     ion_index = []
-    for line in open(inp.POT_atoms):
-        if line.startswith("ATOM"):
-            dummy = line.split()
-            tags = float(line[inp.POT_colA:inp.POT_colB])
-            if tags == inp.POT_tag:
-                z_wall.addParticle(idx, [])
-                ion_index.append(idx)
-            idx += 1
+    if inp.POT_atoms_from is 'name':
+        structure = pmd.load_file(coordinates, structure=True)
+        for atom in structure.atoms:
+            if atom.name in inp.POT_atoms:
+                ion_index.append(atom.idx)
+
+    elif inp.POT_atoms_from is 'file':
+        idx = 0
+        for line in open(inp.POT_atoms_file):
+            if line.startswith("ATOM"):
+                dummy = line.split()
+                tags = float(line[inp.POT_colA:inp.POT_colB])
+                if tags == inp.POT_tag:
+                    z_wall.addParticle(idx, [])
+                    ion_index.append(idx)
+                idx += 1
     n_ions = len(ion_index)
     system.addForce(z_wall)
     z_wall.setForceGroup(10)
