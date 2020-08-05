@@ -16,7 +16,7 @@ platform = openmm.Platform.getPlatformByName(inp.Hardware_type)
 properties = {}
 if inp.Hardware_type == 'CUDA':
     properties = {'CudaDeviceIndex': inp.Hardware_gpu_idx,
-                  'CudaPrecision'  : inp.Hardware_gpu_prec}
+                  'CudaPrecision': inp.Hardware_gpu_prec}
 
 # Create OpenMM System
 system, topology, coordinates = create_system(inp)
